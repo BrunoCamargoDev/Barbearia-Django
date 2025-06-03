@@ -22,21 +22,28 @@
 <body>
     <h1>Lista de Agendamentos</h1>
     <table>
-        <tr>
-            <th>Nome</th>
-            <th>Serviço</th>
-            <th>Data</th>
-            <th>Hora</th>
-        </tr>
-        {% for agendamento in agendamentos %}
-        <tr>
-            <td>{{ agendamento.cliente.nome }}</td>
-            <td>{{ agendamento.servico.nome }}</td>
-            <td>{{ agendamento.data }}</td>
-            <td>{{ agendamento.hora }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <tr>
+        <th>Nome</th>
+        <th>Serviço</th>
+        <th>Data</th>
+        <th>Hora</th>
+    </tr>
+    {% for agendamento in agendamentos %}
+    <tr>
+        <td>{{ agendamento.cliente.nome }}</td>
+        <td>
+            {% for servico in agendamento.servico.all %}
+                {{ servico.nome }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+                Nenhum serviço
+            {% endfor %}
+        </td>
+        <td>{{ agendamento.data }}</td>
+        <td>{{ agendamento.hora }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
 
     <a href="{% url 'logout' %}" class="logout">Sair</a>
 </body>

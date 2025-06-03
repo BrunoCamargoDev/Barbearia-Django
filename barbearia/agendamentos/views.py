@@ -5,31 +5,53 @@ from .models import Cliente, Servico, agendamento
 from django.contrib import messages
 
 # Função para os clientes agendarem seu horário
+from datetime import datetime, date, time
+
+from datetime import datetime, date
+
 def agendar(request):
     servicos = Servico.objects.all()
+    hoje = date.today().isoformat()
 
     if request.method == 'POST':
         nome = request.POST['nome']
         telefone = request.POST['telefone']
-        servico_id = request.POST['servico']
-        data = request.POST['data']
-        hora = request.POST['hora']
+        servico_ids = request.POST.getlist('servico')
+        data_str = request.POST['data']
+        hora_str = request.POST['hora']
+
+        data_agendamento = datetime.strptime(data_str, '%Y-%m-%d').date()
+        hora_agendamento = datetime.strptime(hora_str, '%H:%M').time()
 
         # Verificar se hora termina em :00
-        hora_minuto = hora.split(':')[1]
-        if hora_minuto != '00':
+        if hora_agendamento.minute != 0:
             messages.error(request, 'Os agendamentos só podem ser feitos de hora em hora (ex: 13:00, 14:00).')
-            return render(request, 'agendamentos/agendar.html', {'servicos': servicos})
+            return render(request, 'agendamentos/agendar.html', {'servicos': servicos, 'hoje': hoje})
 
+        # Verificar se data/hora não é passada
+        agora = datetime.now()
+        agendamento_datetime = datetime.combine(data_agendamento, hora_agendamento)
+        if agendamento_datetime < agora:
+            messages.error(request, 'Você não pode agendar para uma data e hora passada.')
+            return render(request, 'agendamentos/agendar.html', {'servicos': servicos, 'hoje': hoje})
+
+        # Verificar se já existe agendamento no mesmo dia e hora
+        existe = agendamento.objects.filter(data=data_agendamento, hora=hora_agendamento).exists()
+        if existe:
+            messages.error(request, 'Este horário já está ocupado. Por favor, escolha outro.')
+            return render(request, 'agendamentos/agendar.html', {'servicos': servicos, 'hoje': hoje})
+
+        # Criar cliente e agendamento
         cliente = Cliente.objects.create(nome=nome, telefone=telefone)
-        servico = Servico.objects.get(id=servico_id)
-
-        agendamento.objects.create(cliente=cliente, servico=servico, data=data, hora=hora)
+        novo_agendamento = agendamento.objects.create(cliente=cliente, data=data_agendamento, hora=hora_agendamento)
+        novo_agendamento.servico.set(servico_ids)
 
         messages.success(request, 'Agendamento realizado com sucesso!')
         return redirect('agendar')
 
-    return render(request, 'agendamentos/agendar.html', {'servicos': servicos})
+    return render(request, 'agendamentos/agendar.html', {'servicos': servicos, 'hoje': hoje})
+
+
 
 
 # Função para o dono verificar os agendamentos

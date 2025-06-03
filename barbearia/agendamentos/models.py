@@ -13,7 +13,7 @@ class Servico(models.Model):
 
 class agendamento(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    servico = models.ForeignKey(Servico, on_delete=models.CASCADE)
+    servico = models.ManyToManyField(Servico)
     data = models.DateField()
     hora = models.TimeField()
 
